@@ -1,0 +1,65 @@
+* { margin: 0; padding: 0; box-sizing: border-box; }
+
+body {
+    font-family: 'Poppins', sans-serif;
+    background: linear-gradient(135deg, #e8efe9 0%, #c8d6af 100%);
+    min-height: 100vh;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    padding: 20px;
+}
+
+.container { width: 100%; max-width: 480px; }
+
+.card {
+    background: #ffffff;
+    border-radius: 24px;
+    padding: 35px 25px;
+    box-shadow: 0 20px 40px rgba(60, 80, 60, 0.1);
+    text-align: center;
+}
+
+.header .logo-icon { font-size: 45px; color: #4a6b42; margin-bottom: 10px; }
+.header h1 { font-weight: 600; color: #2d3b29; font-size: 24px; margin-bottom: 8px; }
+.header p { font-size: 14px; color: #5c6b57; margin-bottom: 25px; }
+
+.file-drop-area {
+    position: relative;
+    border: 2px dashed #a4b89d;
+    border-radius: 16px;
+    padding: 30px 15px;
+    background-color: #f6f9f5;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.file-drop-area:hover { background-color: #ebf2e9; border-color: #4a6b42; }
+.upload-icon { font-size: 35px; color: #718a67; margin-bottom: 10px; display: block; }
+.file-msg { font-size: 13px; color: #485444; display: block; }
+
+.file-drop-area input[type="file"] {
+    position: absolute; left: 0; top: 0; height: 100%; width: 100%; opacity: 0; cursor: pointer;
+}
+
+.file-list { margin: 15px 0; font-size: 13px; color: #3d4a39; text-align: left; max-height: 100px; overflow-y: auto; }
+
+button {
+    width: 100%;
+    background: linear-gradient(135deg, #597e52, #3a5a34);
+    color: white;
+    border: none;
+    padding: 14px;
+    border-radius: 14px;
+    font-size: 16px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: transform 0.2s, box-shadow 0.2s;
+}
+
+button:hover { transform: translateY(-2px); box-shadow: 0 8px 20px rgba(58, 90, 52, 0.3); }
+button:disabled { background: #ccc; cursor: not-allowed; transform: none; box-shadow: none; }
+
+.status-msg { margin-top: 20px; font-size: 14px; font-weight: 500; min-height: 20px; }
+.status-success { color: #2e7d32; }
+.status-error { color: #dc3545; }

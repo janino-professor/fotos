@@ -1,0 +1,207 @@
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    font-family: 'Poppins', sans-serif;
+    /* Fundo imitando parede de madeira clara ou textura aconchegante */
+    background-color: #f0e6d2;
+    background-image: 
+        radial-gradient(rgba(0,0,0,0.03) 1px, transparent 0),
+        linear-gradient(to right, rgba(0,0,0,0.02) 1px, transparent 1px),
+        linear-gradient(to bottom, rgba(0,0,0,0.02) 1px, transparent 1px);
+    background-size: 30px 30px, 20px 20px, 20px 20px;
+    min-height: 100vh;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    padding: 20px;
+    overflow-x: hidden;
+    position: relative;
+}
+
+/* --- MURAL DE POLAROIDS NO FUNDO --- */
+.mural-background {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    pointer-events: none; /* Deixa clicar no formulário sem atrapalhar */
+    z-index: 1;
+}
+
+.polaroid {
+    position: absolute;
+    background: #ffffff;
+    padding: 10px 10px 25px 10px;
+    box-shadow: 0 8px 20px rgba(0, 0, 0, 0.15);
+    border-radius: 2px;
+    text-align: center;
+    width: 160px;
+    transition: transform 0.3s ease;
+}
+
+.polaroid img {
+    width: 100%;
+    height: 130px;
+    object-fit: cover;
+    border: 1px solid #eee;
+}
+
+.polaroid span {
+    font-family: 'Caveat', cursive;
+    font-size: 18px;
+    color: #444;
+    display: block;
+    margin-top: 8px;
+}
+
+/* Fita Adesiva Transparente (Fita Crepe) */
+.tape {
+    position: absolute;
+    top: -12px;
+    left: 30%;
+    width: 60px;
+    height: 22px;
+    background-color: rgba(243, 230, 190, 0.65);
+    box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+    transform: rotate(-3deg);
+    border-left: 1px dashed rgba(0,0,0,0.1);
+    border-right: 1px dashed rgba(0,0,0,0.1);
+}
+
+/* Posicionamento e Rotações Únicas das Fotos no Mural */
+.p1 { top: 8%; left: 6%; transform: rotate(-8deg); }
+.p2 { top: 12%; right: 8%; transform: rotate(10deg); }
+.p3 { bottom: 10%; left: 8%; transform: rotate(6deg); }
+.p4 { bottom: 8%; right: 10%; transform: rotate(-12deg); }
+.p5 { top: 48%; left: 2%; transform: rotate(-15deg); }
+
+/* --- CARD DO FORMULÁRIO CENTRAL --- */
+.container {
+    width: 100%;
+    max-width: 460px;
+    position: relative;
+    z-index: 10; /* Fica acima do mural */
+}
+
+.card {
+    background: rgba(255, 255, 255, 0.95);
+    backdrop-filter: blur(8px);
+    border-radius: 20px;
+    padding: 35px 25px;
+    box-shadow: 0 20px 50px rgba(74, 44, 17, 0.2);
+    border: 2px solid #ffffff;
+    text-align: center;
+}
+
+.header .logo-icon {
+    font-size: 42px;
+    color: #8b4513;
+    margin-bottom: 10px;
+}
+
+.header h1 {
+    font-family: 'Caveat', cursive;
+    font-size: 36px;
+    color: #4a2c11;
+    margin-bottom: 4px;
+}
+
+.header p {
+    font-size: 13px;
+    color: #6e5849;
+    margin-bottom: 25px;
+}
+
+.file-drop-area {
+    position: relative;
+    border: 2px dashed #d4c3b3;
+    border-radius: 14px;
+    padding: 28px 15px;
+    background-color: #faf6f0;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.file-drop-area:hover {
+    background-color: #f3ece3;
+    border-color: #8b4513;
+}
+
+.upload-icon {
+    font-size: 32px;
+    color: #a68a6d;
+    margin-bottom: 8px;
+    display: block;
+}
+
+.file-msg {
+    font-size: 13px;
+    color: #5c4a3e;
+    display: block;
+}
+
+.file-drop-area input[type="file"] {
+    position: absolute;
+    left: 0;
+    top: 0;
+    height: 100%;
+    width: 100%;
+    opacity: 0;
+    cursor: pointer;
+}
+
+.file-list {
+    margin: 15px 0;
+    font-size: 13px;
+    color: #444;
+    text-align: left;
+    max-height: 100px;
+    overflow-y: auto;
+}
+
+button {
+    width: 100%;
+    background: linear-gradient(135deg, #a0522d, #703611);
+    color: white;
+    border: none;
+    padding: 14px;
+    border-radius: 12px;
+    font-size: 15px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: transform 0.2s, box-shadow 0.2s;
+}
+
+button:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 18px rgba(112, 54, 17, 0.35);
+}
+
+button:disabled {
+    background: #ccc;
+    cursor: not-allowed;
+    transform: none;
+}
+
+.status-msg {
+    margin-top: 18px;
+    font-size: 14px;
+    font-weight: 500;
+    min-height: 20px;
+}
+
+.status-success { color: #2e7d32; }
+.status-error { color: #c62828; }
+
+/* Esconde algumas polaroids em telas menores de celular para não poluir */
+@media (max-width: 768px) {
+    .p5 { display: none; }
+    .polaroid { width: 120px; padding: 6px 6px 18px 6px; }
+    .polaroid img { height: 95px; }
+    .polaroid span { font-size: 14px; }
+}
