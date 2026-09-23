@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Álbum de Fotos da Família</title>
+    <!-- Ícones e Fonte Externa -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Caveat:wght@600&family=Poppins:wght@300;400;600&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <!-- Nosso CSS Personalizado -->
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+<body>
+
+    <!-- Mural de Fotos ao Fundo (Sorteio Dinâmico) -->
+    <div class="mural-background">
+        {% set legendas = ['Nossas Memórias', 'Momentos', 'Família', 'Alegria', 'Para Sempre'] %}
+        {% for foto in fotos %}
+            <div class="polaroid p{{ loop.index }}">
+                <div class="tape"></div>
+                <img src="{{ url_for('static', filename='img/' ~ foto) }}" alt="Foto da Família">
+                <span>{{ legendas[loop.index0 % legendas|length] }}</span>
+            </div>
+        {% endfor %}
+    </div>
+
+    <!-- Conteúdo Central (Formulário) -->
+    <div class="container">
+        <div class="card">
+            <div class="header">
+                <i class="fa-solid fa-camera-retro logo-icon"></i>
+                <h1>Mural da Família</h1>
+                <p>Envie suas fotos para guardar nossas lembranças com carinho para sempre!</p>
+            </div>
+
+            <form id="uploadForm">
+                <div class="file-drop-area" id="dropArea">
+                    <i class="fa-solid fa-cloud-arrow-up upload-icon"></i>
+                    <span class="file-msg">Clique para escolher as fotos ou arraste até aqui</span>
+                    <input type="file" id="fileInput" accept="image/*" multiple>
+                </div>
+
+                <div id="fileList" class="file-list"></div>
+
+                <button type="button" id="uploadBtn" onclick="enviarFotos()">
+                    <i class="fa-solid fa-paper-plane"></i> Enviar para o Mural
+                </button>
+            </form>
+
+            <div id="status" class="status-msg"></div>
+        </div>
+    </div>
+
+    <script src="{{ url_for('static', filename='js/script.js') }}"></script>
+</body>
+</html>
