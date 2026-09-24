@@ -33,9 +33,8 @@ def index():
             res = requests.get(url, headers=headers)
             if res.status_code == 200:
                 arquivos = res.json()
-                # Salva os objetos das fotos do GitHub contendo o nome e o link de download direto
                 fotos = [
-                    {'tipo': 'github', 'url': file['download_url']} 
+                    {'tipo': 'github', 'url': file['download_url'], 'nome': file['name']} 
                     for file in arquivos if file['name'].lower().endswith(tuple(ALLOWED_EXTENSIONS))
                 ]
         except Exception as e:
@@ -47,13 +46,47 @@ def index():
         if os.path.exists(img_dir):
             for f in os.listdir(img_dir):
                 if allowed_file(f):
-                    fotos.append({'tipo': 'local', 'filename': f})
+                    fotos.append({'tipo': 'local', 'filename': f, 'nome': f})
 
-    # Embaralha e seleciona até 5 fotos
+    # Embaralha e seleciona até 5 fotos para a tela principal (Mural)
     qtd = min(5, len(fotos))
     fotos_sorteadas = random.sample(fotos, qtd) if fotos else []
 
     return render_template('index.html', fotos=fotos_sorteadas)
+
+@app.route('/todas-as-fotos')
+def todas_as_fotos():
+    fotos = []
+
+    if GITHUB_REPO and GITHUB_TOKEN:
+        headers = {
+            "Authorization": f"token {GITHUB_TOKEN}",
+            "Accept": "application/vnd.github.v3+json"
+        }
+        url = f"https://api.github.com/repos/{GITHUB_REPO}/contents/{TARGET_FOLDER}"
+        try:
+            res = requests.get(url, headers=headers)
+            if res.status_code == 200:
+                arquivos = res.json()
+                fotos = [
+                    {'tipo': 'github', 'url': file['download_url'], 'nome': file['name']} 
+                    for file in arquivos if file['name'].lower().endswith(tuple(ALLOWED_EXTENSIONS))
+                ]
+        except Exception as e:
+            print(f"Erro no GitHub: {e}")
+
+    if not fotos:
+        img_dir = os.path.join(app.static_folder, 'img')
+        if os.path.exists(img_dir):
+            for f in os.listdir(img_dir):
+                if allowed_file(f):
+                    fotos.append({
+                        'tipo': 'local', 
+                        'url': f"/static/img/{f}", 
+                        'nome': f
+                    })
+
+    return jsonify({'fotos': fotos})
 
 @app.route('/upload', methods=['POST'])
 def upload_file():
