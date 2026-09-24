@@ -10,7 +10,7 @@
     <link href="https://fonts.googleapis.com/css2?family=Caveat:wght@600&family=Poppins:wght@300;400;600&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     
-    <!-- Nosso CSS Personalizado -->
+    <!-- CSS Personalizado -->
     <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
 </head>
 <body>
@@ -21,7 +21,14 @@
         {% for foto in fotos %}
             <div class="polaroid p{{ loop.index }}">
                 <div class="tape"></div>
-                <img src="{{ url_for('static', filename='img/' ~ foto) }}" alt="Foto da Família">
+                
+                <!-- Condicional para carregar a foto do GitHub ou do static/img sem quebrar -->
+                {% if foto.tipo == 'github' %}
+                    <img src="{{ foto.url }}" alt="Foto da Família">
+                {% else %}
+                    <img src="{{ url_for('static', filename='img/' ~ foto.filename) }}" alt="Foto da Família">
+                {% endif %}
+                
                 <span>{{ legendas[loop.index0 % legendas|length] }}</span>
             </div>
         {% endfor %}
@@ -40,7 +47,7 @@
                 <div class="file-drop-area" id="dropArea">
                     <i class="fa-solid fa-cloud-arrow-up upload-icon"></i>
                     <span class="file-msg">Clique para escolher as fotos ou arraste até aqui</span>
-                    <input type="file" id="fileInput" accept="image/*" multiple>
+                    <input type="file" id="fileInput" accept="image/*" multiple onchange="mostrarNomeArquivo(event)">
                 </div>
 
                 <div id="fileList" class="file-list"></div>
@@ -55,5 +62,21 @@
     </div>
 
     <script src="{{ url_for('static', filename='js/script.js') }}"></script>
+    <script>
+        // Função para mostrar o nome da foto selecionada abaixo da caixa de upload (como na 1ª foto)
+        function mostrarNomeArquivo(event) {
+            const input = event.target;
+            const fileList = document.getElementById('fileList');
+            if (input.files.length > 0) {
+                let html = '';
+                for (let i = 0; i < input.files.length; i++) {
+                    html += `<p><i class="fa-regular fa-image"></i> ${input.files[i].name}</p>`;
+                }
+                fileList.innerHTML = html;
+            } else {
+                fileList.innerHTML = '';
+            }
+        }
+    </script>
 </body>
 </html>
