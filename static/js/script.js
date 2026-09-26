@@ -1,6 +1,6 @@
-// Funções para controle do Modal de Zoom e Download
+let fotosSalvas = [];
+
 function abrirModal(urlFoto, legenda) {
-    // Esconde a galeria em grid caso ela esteja aberta
     const galleryModal = document.getElementById('galleryModal');
     if (galleryModal) {
         galleryModal.style.display = 'none';
@@ -28,37 +28,69 @@ function fecharModalDirect() {
     document.getElementById('photoModal').style.display = 'none';
 }
 
-// Funções para a Galeria em Grid (Todas as Fotos)
 async function abrirGaleria() {
     const galleryModal = document.getElementById('galleryModal');
     const galleryGrid = document.getElementById('galleryGrid');
+    const folderTabs = document.getElementById('folderTabs');
 
     galleryModal.style.display = 'flex';
     galleryGrid.innerHTML = '<p class="loading-txt">Carregando fotos do repositório...</p>';
+    folderTabs.innerHTML = '';
 
     try {
         const response = await fetch('/todas-as-fotos');
         const data = await response.json();
 
         if (data.fotos && data.fotos.length > 0) {
-            let html = '';
-            data.fotos.forEach(foto => {
-                const url = foto.tipo === 'github' ? foto.url : foto.url;
-                html += `
-                    <div class="grid-item" onclick="abrirModal('${url}', '${foto.nome}')">
-                        <img src="${url}" alt="${foto.nome}" loading="lazy">
-                        <div class="grid-overlay">
-                            <i class="fa-solid fa-magnifying-glass-plus"></i>
-                        </div>
-                    </div>
-                `;
+            fotosSalvas = data.fotos;
+            
+            const pastas = [...new Set(fotosSalvas.map(f => f.pasta || 'Geral'))];
+            
+            let tabsHtml = `<button type="button" class="tab-btn active" onclick="filtrarPasta('TODAS', this)">Todas</button>`;
+            pastas.forEach(pasta => {
+                tabsHtml += `<button type="button" class="tab-btn" onclick="filtrarPasta('${pasta}', this)"><i class="fa-solid fa-folder"></i> ${pasta}</button>`;
             });
-            galleryGrid.innerHTML = html;
+            folderTabs.innerHTML = tabsHtml;
+
+            renderizarGrid(fotosSalvas);
         } else {
             galleryGrid.innerHTML = '<p class="loading-txt">Nenhuma foto encontrada no repositório.</p>';
         }
     } catch (err) {
         galleryGrid.innerHTML = `<p class="loading-txt">Erro ao carregar galeria: ${err.message}</p>`;
+    }
+}
+
+function renderizarGrid(listaFotos) {
+    const galleryGrid = document.getElementById('galleryGrid');
+    if (listaFotos.length === 0) {
+        galleryGrid.innerHTML = '<p class="loading-txt">Nenhuma foto nesta pasta.</p>';
+        return;
+    }
+
+    let html = '';
+    listaFotos.forEach(foto => {
+        html += `
+            <div class="grid-item" onclick="abrirModal('${foto.url}', '${foto.nome}')">
+                <img src="${foto.url}" alt="${foto.nome}" loading="lazy">
+                <div class="grid-overlay">
+                    <i class="fa-solid fa-magnifying-glass-plus"></i>
+                </div>
+            </div>
+        `;
+    });
+    galleryGrid.innerHTML = html;
+}
+
+function filtrarPasta(nomePasta, btn) {
+    document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+    if (btn) btn.classList.add('active');
+
+    if (nomePasta === 'TODAS') {
+        renderizarGrid(fotosSalvas);
+    } else {
+        const filtradas = fotosSalvas.filter(f => (f.pasta || 'Geral') === nomePasta);
+        renderizarGrid(filtradas);
     }
 }
 
@@ -72,11 +104,12 @@ function fecharGaleriaDirect() {
     document.getElementById('galleryModal').style.display = 'none';
 }
 
-// Função de Upload para a API Flask / GitHub
 async function enviarFotos() {
     const input = document.getElementById('fileInput');
+    const folderInput = document.getElementById('folderInput');
     const statusDiv = document.getElementById('status');
     const files = input.files;
+    const nomePasta = folderInput.value.trim();
 
     if (files.length === 0) {
         statusDiv.className = 'status-msg status-error';
@@ -91,6 +124,7 @@ async function enviarFotos() {
         const file = files[i];
         const formData = new FormData();
         formData.append('file', file);
+        formData.append('pasta', nomePasta);
 
         try {
             const response = await fetch('/upload', {
