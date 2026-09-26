@@ -116,6 +116,38 @@ body {
     margin-bottom: 25px;
 }
 
+/* Campo para Nome da Pasta / Álbum */
+.folder-input-group {
+    display: flex;
+    align-items: center;
+    background-color: #fcfaf7;
+    border: 2px solid #d1c2a5;
+    border-radius: 12px;
+    padding: 10px 15px;
+    margin-bottom: 15px;
+    transition: all 0.2s ease;
+}
+
+.folder-input-group:focus-within {
+    border-color: #8b4513;
+}
+
+.folder-input-group i {
+    color: #8b4513;
+    font-size: 18px;
+    margin-right: 10px;
+}
+
+.folder-input-group input {
+    border: none;
+    background: transparent;
+    width: 100%;
+    outline: none;
+    font-family: 'Poppins', sans-serif;
+    font-size: 13px;
+    color: #333;
+}
+
 /* Área de Upload */
 .file-drop-area {
     border: 2px dashed #d1c2a5;
@@ -162,7 +194,8 @@ body {
     color: #444;
 }
 
-button {
+/* Botões do Formulário Principal */
+.btn-primary {
     width: 100%;
     background-color: #8b4513;
     color: white;
@@ -176,7 +209,7 @@ button {
     transition: background 0.2s;
 }
 
-button:hover {
+.btn-primary:hover {
     background-color: #6d340d;
 }
 
@@ -211,7 +244,7 @@ button:hover {
 .modal {
     display: none;
     position: fixed;
-    z-index: 2000; /* Z-index alto para ficar sobre tudo */
+    z-index: 2000;
     left: 0;
     top: 0;
     width: 100%;
@@ -306,11 +339,55 @@ button:hover {
     font-family: 'Caveat', cursive;
     font-size: 32px;
     color: #3a2510;
-    margin-bottom: 20px;
+    margin-bottom: 15px;
     text-align: center;
     flex-shrink: 0;
 }
 
+/* Abas de Pastas na Galeria */
+.folder-tabs {
+    display: flex;
+    gap: 8px;
+    overflow-x: auto;
+    padding-bottom: 12px;
+    margin-bottom: 15px;
+    border-bottom: 1px solid #eee;
+    flex-shrink: 0;
+}
+
+.folder-tabs::-webkit-scrollbar {
+    height: 4px;
+}
+
+.folder-tabs::-webkit-scrollbar-thumb {
+    background-color: #8b4513;
+    border-radius: 4px;
+}
+
+.tab-btn {
+    background: #f4ece1;
+    color: #6d340d;
+    border: none;
+    padding: 8px 16px;
+    border-radius: 20px;
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+    white-space: nowrap;
+    transition: all 0.2s ease;
+    margin: 0;
+    width: auto;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.tab-btn:hover, .tab-btn.active {
+    background: #8b4513;
+    color: #ffffff;
+}
+
+/* Grid das fotos */
 .gallery-grid {
     display: grid;
     grid-template-columns: repeat(auto-fill, minmax(130px, 1fr));
@@ -323,10 +400,12 @@ button:hover {
 .gallery-grid::-webkit-scrollbar {
     width: 8px;
 }
+
 .gallery-grid::-webkit-scrollbar-thumb {
     background-color: #8b4513;
     border-radius: 4px;
 }
+
 .gallery-grid::-webkit-scrollbar-track {
     background: #f1f1f1;
 }
