@@ -18,37 +18,53 @@ ALLOWED_EXTENSIONS = {'png', 'jpg', 'jpeg', 'webp'}
 def allowed_file(filename):
     return '.' in filename and filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
 
+def fetch_github_contents(path=""):
+    headers = {
+        "Authorization": f"token {GITHUB_TOKEN}",
+        "Accept": "application/vnd.github.v3+json"
+    }
+    url = f"https://api.github.com/repos/{GITHUB_REPO}/contents/{path}"
+    items = []
+    
+    try:
+        res = requests.get(url, headers=headers)
+        if res.status_code == 200:
+            contents = res.json()
+            for item in contents:
+                if item['type'] == 'dir':
+                    items.extend(fetch_github_contents(item['path']))
+                elif item['type'] == 'file' and allowed_file(item['name']):
+                    rel_path = item['path'].replace(f"{TARGET_FOLDER}/", "")
+                    folder_name = rel_path.split('/')[0] if '/' in rel_path else "Geral"
+                    
+                    items.append({
+                        'tipo': 'github',
+                        'url': item['download_url'],
+                        'nome': item['name'],
+                        'pasta': folder_name
+                    })
+    except Exception as e:
+        print(f"Erro ao buscar no repositório GitHub ({path}): {e}")
+
+    return items
+
 @app.route('/')
 def index():
     fotos = []
 
-    # 1. Tenta buscar as fotos cadastradas no GitHub
     if GITHUB_REPO and GITHUB_TOKEN:
-        headers = {
-            "Authorization": f"token {GITHUB_TOKEN}",
-            "Accept": "application/vnd.github.v3+json"
-        }
-        url = f"https://api.github.com/repos/{GITHUB_REPO}/contents/{TARGET_FOLDER}"
         try:
-            res = requests.get(url, headers=headers)
-            if res.status_code == 200:
-                arquivos = res.json()
-                fotos = [
-                    {'tipo': 'github', 'url': file['download_url'], 'nome': file['name']} 
-                    for file in arquivos if file['name'].lower().endswith(tuple(ALLOWED_EXTENSIONS))
-                ]
+            fotos = fetch_github_contents(TARGET_FOLDER)
         except Exception as e:
             print(f"Erro no GitHub: {e}")
 
-    # 2. Se não houver fotos no GitHub ainda, busca as fotos decorativas locais de static/img
     if not fotos:
         img_dir = os.path.join(app.static_folder, 'img')
         if os.path.exists(img_dir):
             for f in os.listdir(img_dir):
                 if allowed_file(f):
-                    fotos.append({'tipo': 'local', 'filename': f, 'nome': f})
+                    fotos.append({'tipo': 'local', 'filename': f, 'nome': f, 'pasta': 'Geral'})
 
-    # Embaralha e seleciona até 5 fotos para a tela principal (Mural)
     qtd = min(5, len(fotos))
     fotos_sorteadas = random.sample(fotos, qtd) if fotos else []
 
@@ -59,19 +75,8 @@ def todas_as_fotos():
     fotos = []
 
     if GITHUB_REPO and GITHUB_TOKEN:
-        headers = {
-            "Authorization": f"token {GITHUB_TOKEN}",
-            "Accept": "application/vnd.github.v3+json"
-        }
-        url = f"https://api.github.com/repos/{GITHUB_REPO}/contents/{TARGET_FOLDER}"
         try:
-            res = requests.get(url, headers=headers)
-            if res.status_code == 200:
-                arquivos = res.json()
-                fotos = [
-                    {'tipo': 'github', 'url': file['download_url'], 'nome': file['name']} 
-                    for file in arquivos if file['name'].lower().endswith(tuple(ALLOWED_EXTENSIONS))
-                ]
+            fotos = fetch_github_contents(TARGET_FOLDER)
         except Exception as e:
             print(f"Erro no GitHub: {e}")
 
@@ -83,7 +88,8 @@ def todas_as_fotos():
                     fotos.append({
                         'tipo': 'local', 
                         'url': f"/static/img/{f}", 
-                        'nome': f
+                        'nome': f,
+                        'pasta': 'Geral'
                     })
 
     return jsonify({'fotos': fotos})
@@ -91,6 +97,7 @@ def todas_as_fotos():
 @app.route('/upload', methods=['POST'])
 def upload_file():
     file = request.files.get('file') or request.files.get('files')
+    pasta = request.form.get('pasta', '').strip()
     
     if not file or file.filename == '':
         return jsonify({'error': 'Nenhum arquivo enviado'}), 400
@@ -105,7 +112,12 @@ def upload_file():
         content = file.read()
         content_b64 = base64.b64encode(content).decode('utf-8')
         
-        path_in_repo = f"{TARGET_FOLDER}/{file.filename}"
+        if pasta:
+            pasta_limpa = "".join(c for c in pasta if c.isalnum() or c in (' ', '_', '-')).strip()
+            path_in_repo = f"{TARGET_FOLDER}/{pasta_limpa}/{file.filename}"
+        else:
+            path_in_repo = f"{TARGET_FOLDER}/{file.filename}"
+
         url = f"https://api.github.com/repos/{GITHUB_REPO}/contents/{path_in_repo}"
 
         headers = {
