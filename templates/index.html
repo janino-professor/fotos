@@ -4,13 +4,10 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Álbum de Fotos da Família</title>
-    <!-- Ícones e Fontes Externas -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Caveat:wght@600&family=Poppins:wght@300;400;600&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    
-    <!-- CSS Personalizado -->
     <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
 </head>
 <body>
@@ -44,6 +41,11 @@
             </div>
 
             <form id="uploadForm">
+                <div class="folder-input-group">
+                    <i class="fa-solid fa-folder-plus"></i>
+                    <input type="text" id="folderInput" placeholder="Nome da Pasta ou Álbum (ex: Viagem, Natal)">
+                </div>
+
                 <div class="file-drop-area" id="dropArea">
                     <i class="fa-solid fa-cloud-arrow-up upload-icon"></i>
                     <span class="file-msg">Clique para escolher as fotos ou arraste até aqui</span>
@@ -52,12 +54,11 @@
 
                 <div id="fileList" class="file-list"></div>
 
-                <button type="button" id="uploadBtn" onclick="enviarFotos()">
+                <button type="button" id="uploadBtn" class="btn-primary" onclick="enviarFotos()">
                     <i class="fa-solid fa-paper-plane"></i> Enviar para o Mural
                 </button>
             </form>
 
-            <!-- Botão para Abrir Toda a Galeria -->
             <button type="button" class="btn-secondary" onclick="abrirGaleria()">
                 <i class="fa-solid fa-images"></i> Ver Toda a Galeria
             </button>
@@ -82,12 +83,14 @@
         </div>
     </div>
 
-    <!-- MODAL DA GALERIA EM GRID (TODAS AS FOTOS) -->
+    <!-- MODAL DA GALERIA EM GRID COM PASTAS -->
     <div id="galleryModal" class="modal" onclick="fecharGaleria(event)">
         <div class="gallery-modal-content" onclick="event.stopPropagation()">
             <span class="close-btn" onclick="fecharGaleriaDirect()">&times;</span>
             <h2><i class="fa-solid fa-photo-film"></i> Todas as Memórias Guardadas</h2>
             
+            <div id="folderTabs" class="folder-tabs"></div>
+
             <div id="galleryGrid" class="gallery-grid">
                 <p class="loading-txt">Carregando fotos do repositório...</p>
             </div>
