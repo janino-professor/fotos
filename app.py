@@ -51,10 +51,12 @@ def fetch_github_contents(path=""):
 @app.route('/')
 def index():
     fotos = []
+    pastas_existentes = []
 
     if GITHUB_REPO and GITHUB_TOKEN:
         try:
             fotos = fetch_github_contents(TARGET_FOLDER)
+            pastas_existentes = sorted(list(set(f['pasta'] for f in fotos if f.get('pasta') and f['pasta'] != 'Geral')))
         except Exception as e:
             print(f"Erro no GitHub: {e}")
 
@@ -68,7 +70,7 @@ def index():
     qtd = min(5, len(fotos))
     fotos_sorteadas = random.sample(fotos, qtd) if fotos else []
 
-    return render_template('index.html', fotos=fotos_sorteadas)
+    return render_template('index.html', fotos=fotos_sorteadas, pastas_existentes=pastas_existentes)
 
 @app.route('/todas-as-fotos')
 def todas_as_fotos():
