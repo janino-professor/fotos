@@ -1,161 +1,198 @@
-let fotosSalvas = [];
+let todasAsFotos = [];
+let pastaAtual = 'todas';
 
-function abrirModal(urlFoto, legenda) {
-    const galleryModal = document.getElementById('galleryModal');
-    if (galleryModal) {
-        galleryModal.style.display = 'none';
-    }
-
+function abrirModal(url, legenda) {
     const modal = document.getElementById('photoModal');
     const modalImg = document.getElementById('modalImg');
     const modalCaption = document.getElementById('modalCaption');
     const downloadBtn = document.getElementById('downloadBtn');
 
-    modalImg.src = urlFoto;
-    modalCaption.innerText = legenda || 'Foto de Família';
-    downloadBtn.href = urlFoto;
-
-    modal.style.display = 'flex';
+    if (modal && modalImg && modalCaption && downloadBtn) {
+        modalImg.src = url;
+        modalCaption.innerText = legenda;
+        downloadBtn.href = url;
+        modal.style.display = 'flex';
+    }
 }
 
 function fecharModal(event) {
     if (event.target.id === 'photoModal') {
-        document.getElementById('photoModal').style.display = 'none';
+        fecharModalDirect();
     }
 }
 
 function fecharModalDirect() {
-    document.getElementById('photoModal').style.display = 'none';
-}
-
-async function abrirGaleria() {
-    const galleryModal = document.getElementById('galleryModal');
-    const galleryGrid = document.getElementById('galleryGrid');
-    const folderTabs = document.getElementById('folderTabs');
-
-    galleryModal.style.display = 'flex';
-    galleryGrid.innerHTML = '<p class="loading-txt">Carregando fotos do repositório...</p>';
-    folderTabs.innerHTML = '';
-
-    try {
-        const response = await fetch('/todas-as-fotos');
-        const data = await response.json();
-
-        if (data.fotos && data.fotos.length > 0) {
-            fotosSalvas = data.fotos;
-            
-            const pastas = [...new Set(fotosSalvas.map(f => f.pasta || 'Geral'))];
-            
-            let tabsHtml = `<button type="button" class="tab-btn active" onclick="filtrarPasta('TODAS', this)">Todas</button>`;
-            pastas.forEach(pasta => {
-                tabsHtml += `<button type="button" class="tab-btn" onclick="filtrarPasta('${pasta}', this)"><i class="fa-solid fa-folder"></i> ${pasta}</button>`;
-            });
-            folderTabs.innerHTML = tabsHtml;
-
-            renderizarGrid(fotosSalvas);
-        } else {
-            galleryGrid.innerHTML = '<p class="loading-txt">Nenhuma foto encontrada no repositório.</p>';
-        }
-    } catch (err) {
-        galleryGrid.innerHTML = `<p class="loading-txt">Erro ao carregar galeria: ${err.message}</p>`;
+    const modal = document.getElementById('photoModal');
+    if (modal) {
+        modal.style.display = 'none';
     }
 }
 
-function renderizarGrid(listaFotos) {
-    const galleryGrid = document.getElementById('galleryGrid');
-    if (listaFotos.length === 0) {
-        galleryGrid.innerHTML = '<p class="loading-txt">Nenhuma foto nesta pasta.</p>';
-        return;
-    }
-
-    let html = '';
-    listaFotos.forEach(foto => {
-        html += `
-            <div class="grid-item" onclick="abrirModal('${foto.url}', '${foto.nome}')">
-                <img src="${foto.url}" alt="${foto.nome}" loading="lazy">
-                <div class="grid-overlay">
-                    <i class="fa-solid fa-magnifying-glass-plus"></i>
-                </div>
-            </div>
-        `;
-    });
-    galleryGrid.innerHTML = html;
-}
-
-function filtrarPasta(nomePasta, btn) {
-    document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
-    if (btn) btn.classList.add('active');
-
-    if (nomePasta === 'TODAS') {
-        renderizarGrid(fotosSalvas);
-    } else {
-        const filtradas = fotosSalvas.filter(f => (f.pasta || 'Geral') === nomePasta);
-        renderizarGrid(filtradas);
+function abrirGaleria() {
+    const modal = document.getElementById('galleryModal');
+    if (modal) {
+        modal.style.display = 'flex';
+        carregarTodasAsFotos();
     }
 }
 
 function fecharGaleria(event) {
     if (event.target.id === 'galleryModal') {
-        document.getElementById('galleryModal').style.display = 'none';
+        fecharGaleriaDirect();
     }
 }
 
 function fecharGaleriaDirect() {
-    document.getElementById('galleryModal').style.display = 'none';
+    const modal = document.getElementById('galleryModal');
+    if (modal) {
+        modal.style.display = 'none';
+    }
 }
 
-async function enviarFotos() {
-    const input = document.getElementById('fileInput');
-    const folderInput = document.getElementById('folderInput');
-    const existingFolderSelect = document.getElementById('existingFolderSelect');
-    const statusDiv = document.getElementById('status');
-    const files = input.files;
-    
-    // Prioriza o texto digitado (nova pasta), caso contrário usa a seleção do dropdown
-    let nomePasta = folderInput.value.trim();
-    if (!nomePasta && existingFolderSelect) {
-        nomePasta = existingFolderSelect.value;
+function carregarTodasAsFotos() {
+    const galleryGrid = document.getElementById('galleryGrid');
+    if (galleryGrid) {
+        galleryGrid.innerHTML = '<p class="loading-txt">Carregando fotos do repositório...</p>';
     }
 
-    if (files.length === 0) {
-        statusDiv.className = 'status-msg status-error';
-        statusDiv.innerText = 'Por favor, selecione ao menos uma foto.';
+    fetch('/todas-as-fotos')
+        .then(response => {
+            if (!response.ok) {
+                throw new Error('Falha ao carregar as fotos');
+            }
+            return response.json();
+        })
+        .then(data => {
+            todasAsFotos = data.fotos || [];
+            renderizarAbasEGrid();
+        })
+        .catch(error => {
+            console.error('Erro:', error);
+            if (galleryGrid) {
+                galleryGrid.innerHTML = '<p class="error-txt">Erro ao carregar fotos. Tente novamente.</p>';
+            }
+        });
+}
+
+function renderizarAbasEGrid() {
+    const folderTabs = document.getElementById('folderTabs');
+    const galleryGrid = document.getElementById('galleryGrid');
+
+    if (!folderTabs || !galleryGrid) return;
+
+    const pastas = [...new Set(todasAsFotos.map(f => f.pasta))].filter(p => p && p !== 'Geral');
+    pastas.sort();
+
+    let tabsHtml = `<button class="tab-btn ${pastaAtual === 'todas' ? 'active' : ''}" onclick="filtrarPasta('todas')">Todas</button>`;
+
+    pastas.forEach(pasta => {
+        const nomeExibicao = pasta.split('/').pop();
+        const activeClass = pastaAtual === pasta ? 'active' : '';
+
+        tabsHtml += `
+            <button class="tab-btn ${activeClass}" onclick="filtrarPasta('${pasta.replace(/'/g, "\\'")}')">
+                <i class="fa-solid fa-folder"></i> ${nomeExibicao}
+            </button>
+        `;
+    });
+
+    folderTabs.innerHTML = tabsHtml;
+    exibirFotosGrid();
+}
+
+function filtrarPasta(pasta) {
+    pastaAtual = pasta;
+    renderizarAbasEGrid();
+}
+
+function exibirFotosGrid() {
+    const galleryGrid = document.getElementById('galleryGrid');
+    if (!galleryGrid) return;
+
+    let fotosFiltradas = todasAsFotos;
+    if (pastaAtual !== 'todas') {
+        fotosFiltradas = todasAsFotos.filter(f => f.pasta === pastaAtual);
+    }
+
+    if (fotosFiltradas.length === 0) {
+        galleryGrid.innerHTML = '<p class="empty-txt">Nenhuma foto encontrada nesta pasta.</p>';
         return;
     }
 
-    statusDiv.className = 'status-msg';
-    statusDiv.innerText = 'Enviando foto(s)... Aguarde.';
+    let html = '';
+    fotosFiltradas.forEach(foto => {
+        const imgUrl = foto.url || `/static/img/${foto.filename}`;
+        const nomeFoto = foto.nome || 'Foto da Família';
 
-    for (let i = 0; i < files.length; i++) {
-        const file = files[i];
-        const formData = new FormData();
-        formData.append('file', file);
-        formData.append('pasta', nomePasta);
+        html += `
+            <div class="gallery-item" onclick="abrirModal('${imgUrl}', '${nomeFoto}')">
+                <img src="${imgUrl}" alt="${nomeFoto}" loading="lazy">
+            </div>
+        `;
+    });
 
-        try {
-            const response = await fetch('/upload', {
-                method: 'POST',
-                body: formData
-            });
+    galleryGrid.innerHTML = html;
+}
 
-            const data = await response.json();
+function enviarFotos() {
+    const fileInput = document.getElementById('fileInput');
+    const folderInput = document.getElementById('folderInput');
+    const existingFolderSelect = document.getElementById('existingFolderSelect');
+    const statusDiv = document.getElementById('status');
+    const uploadBtn = document.getElementById('uploadBtn');
 
-            if (response.ok) {
-                statusDiv.className = 'status-msg status-success';
-                statusDiv.innerText = `Foto ${file.name} enviada com sucesso!`;
-            } else {
-                statusDiv.className = 'status-msg status-error';
-                statusDiv.innerText = `Erro em ${file.name}: ${data.error}`;
-                return;
-            }
-        } catch (err) {
-            statusDiv.className = 'status-msg status-error';
-            statusDiv.innerText = `Erro de conexão: ${err.message}`;
-            return;
-        }
+    const files = fileInput ? fileInput.files : [];
+    const novaPasta = folderInput ? folderInput.value.trim() : '';
+    const pastaSelecionada = existingFolderSelect ? existingFolderSelect.value.trim() : '';
+
+    const pastaFinal = novaPasta || pastaSelecionada;
+
+    if (files.length === 0) {
+        if (statusDiv) statusDiv.innerHTML = '<span class="erro">Por favor, selecione pelo menos uma foto.</span>';
+        return;
     }
 
-    setTimeout(() => {
-        window.location.reload();
-    }, 1200);
-}
+    if (!pastaFinal) {
+        if (statusDiv) statusDiv.innerHTML = '<span class="erro">Por favor, informe ou selecione uma pasta.</span>';
+        return;
+    }
+
+    if (statusDiv) statusDiv.innerHTML = '<span class="info">Enviando fotos... Aguarde.</span>';
+    if (uploadBtn) uploadBtn.disabled = true;
+
+    let enviosConcluidos = 0;
+    let erros = 0;
+
+    for (let i = 0; i < files.length; i++) {
+        const formData = new FormData();
+        formData.append('file', files[i]);
+        formData.append('pasta', pastaFinal);
+
+        fetch('/upload', {
+            method: 'POST',
+            body: formData
+        })
+        .then(res => res.json())
+        .then(data => {
+            if (data.success) {
+                enviosConcluidos++;
+            } else {
+                erros++;
+            }
+        })
+        .catch(() => {
+            erros++;
+        })
+        .finally(() => {
+            if (enviosConcluidos + erros === files.length) {
+                if (uploadBtn) uploadBtn.disabled = false;
+                if (erros === 0) {
+                    if (statusDiv) statusDiv.innerHTML = '<span class="sucesso">Todas as fotos foram enviadas com sucesso!</span>';
+                    setTimeout(() => { window.location.reload(); }, 1500);
+                } else {
+                    if (statusDiv) statusDiv.innerHTML = `<span class="erro">${enviosConcluidos} foto(s) enviada(s), mas ${erros} falhou(aram).</span>`;
+                }
+            }
+        });
+    }
+} 

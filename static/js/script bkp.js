@@ -107,9 +107,15 @@ function fecharGaleriaDirect() {
 async function enviarFotos() {
     const input = document.getElementById('fileInput');
     const folderInput = document.getElementById('folderInput');
+    const existingFolderSelect = document.getElementById('existingFolderSelect');
     const statusDiv = document.getElementById('status');
     const files = input.files;
-    const nomePasta = folderInput.value.trim();
+    
+    // Prioriza o texto digitado (nova pasta), caso contrário usa a seleção do dropdown
+    let nomePasta = folderInput.value.trim();
+    if (!nomePasta && existingFolderSelect) {
+        nomePasta = existingFolderSelect.value;
+    }
 
     if (files.length === 0) {
         statusDiv.className = 'status-msg status-error';

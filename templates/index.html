@@ -34,6 +34,11 @@
     <!-- Conteúdo Central -->
     <div class="container">
         <div class="card">
+            <div class="user-bar">
+                <span><i class="fa-solid fa-circle-user"></i> Olá, <strong>{{ usuario }}</strong></span>
+                <a href="{{ url_for('logout') }}" class="logout-link"><i class="fa-solid fa-right-from-bracket"></i> Sair</a>
+            </div>
+
             <div class="header">
                 <i class="fa-solid fa-camera-retro logo-icon"></i>
                 <h1>Mural da Família</h1>
@@ -44,14 +49,14 @@
                 <!-- Criar Nova Pasta -->
                 <div class="folder-input-group">
                     <i class="fa-solid fa-folder-plus"></i>
-                    <input type="text" id="folderInput" placeholder="Nova Pasta ou Álbum (ex: Viagem, Natal)">
+                    <input type="text" id="folderInput" placeholder="Nova Subpasta (ex: Aniversario, Natal)">
                 </div>
 
-                <!-- Selecionar Pasta Existente -->
+                <!-- Selecionar Pasta Existente Permitida -->
                 <div class="folder-input-group">
                     <i class="fa-solid fa-folder-open"></i>
                     <select id="existingFolderSelect">
-                        <option value="">Ou selecione uma pasta existente...</option>
+                        <option value="">Ou selecione uma pasta/subpasta existente...</option>
                         {% for p in pastas_existentes %}
                             <option value="{{ p }}">{{ p }}</option>
                         {% endfor %}
@@ -79,7 +84,7 @@
         </div>
     </div>
 
-    <!-- MODAL DE ZOOM E DOWNLOAD -->
+    <!-- MODAL DE ZOOM E DOWNLOAD (Ficará na frente de tudo) -->
     <div id="photoModal" class="modal" onclick="fecharModal(event)">
         <div class="modal-content" onclick="event.stopPropagation()">
             <span class="close-btn" onclick="fecharModalDirect()">&times;</span>

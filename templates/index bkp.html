@@ -41,9 +41,21 @@
             </div>
 
             <form id="uploadForm">
+                <!-- Criar Nova Pasta -->
                 <div class="folder-input-group">
                     <i class="fa-solid fa-folder-plus"></i>
-                    <input type="text" id="folderInput" placeholder="Nome da Pasta ou Álbum (ex: Viagem, Natal)">
+                    <input type="text" id="folderInput" placeholder="Nova Pasta ou Álbum (ex: Viagem, Natal)">
+                </div>
+
+                <!-- Selecionar Pasta Existente -->
+                <div class="folder-input-group">
+                    <i class="fa-solid fa-folder-open"></i>
+                    <select id="existingFolderSelect">
+                        <option value="">Ou selecione uma pasta existente...</option>
+                        {% for p in pastas_existentes %}
+                            <option value="{{ p }}">{{ p }}</option>
+                        {% endfor %}
+                    </select>
                 </div>
 
                 <div class="file-drop-area" id="dropArea">
