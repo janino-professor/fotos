@@ -37,7 +37,11 @@ USUARIOS = {
     'girlandia': {
         'senha': '123456',
         'pastas': ['Familia']
-    }
+    },
+    'purrpurple': {
+            'senha': '31102026',
+            'pastas': ['Atelier']
+        }
 }
 
 def allowed_file(filename):
