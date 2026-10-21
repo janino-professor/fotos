@@ -14,7 +14,13 @@ GITHUB_TOKEN = os.getenv('GITHUB_TOKEN')
 GITHUB_REPO = os.getenv('GITHUB_REPO')
 TARGET_FOLDER = 'fotos_familia'
 
-ALLOWED_EXTENSIONS = {'png', 'jpg', 'jpeg', 'webp'}
+# Conjunto expandido de extensões permitidas (Fotos e Vídeos)
+ALLOWED_EXTENSIONS = {
+    # Imagens
+    'png', 'jpg', 'jpeg', 'webp', 'gif', 'heic', 'bmp', 'tiff',
+    # Vídeos
+    'mp4', 'mov', 'avi', 'mkv', 'webm', 'm4v', '3gp'
+}
 
 # Definição de usuários e suas pastas base/iniciais permitidas
 USUARIOS = {
@@ -39,9 +45,9 @@ USUARIOS = {
         'pastas': ['Familia']
     },
     'purrpurple': {
-            'senha': '31102026',
-            'pastas': ['Atelier']
-        }
+        'senha': '31102026',
+        'pastas': ['Atelier']
+    }
 }
 
 def allowed_file(filename):
@@ -71,23 +77,15 @@ def usuario_tem_permissao(usuario, nome_pasta):
     
     nome_pasta_limpo = nome_pasta.strip().lower()
 
-    # 1. Verifica se a pasta coincide exatamente com alguma pasta permitida do usuário
     for p in pastas_permitidas:
         if p.strip().lower() == nome_pasta_limpo:
             return True
-        # Se for uma subpasta da pasta do usuário (ex: "Hellem Aguiar/Aniversario")
         if nome_pasta_limpo.startswith(p.strip().lower() + "/"):
             return True
 
     return False
 
 def resolver_caminho_pasta(usuario, pasta_digitada):
-    """
-    Define a estrutura no repositório GitHub.
-    Se o usuário tem uma pasta base (ex: 'Hellem Aguiar') e cria uma nova pasta 'Viagem',
-    o caminho será 'Hellem Aguiar/Viagem'.
-    Para usuários com '*', a pasta é criada na raiz do repositório.
-    """
     pasta_digitada = pasta_digitada.strip().strip('/')
     if not pasta_digitada:
         return ""
@@ -95,13 +93,10 @@ def resolver_caminho_pasta(usuario, pasta_digitada):
     pasta_base = obter_base_pasta_usuario(usuario)
 
     if pasta_base:
-        # Se digitou exatamente a pasta base, usa ela
         if pasta_digitada.lower() == pasta_base.lower():
             return pasta_base
-        # Se já começou com a pasta base, usa como está
         if pasta_digitada.lower().startswith(pasta_base.lower() + "/"):
             return pasta_digitada
-        # Caso contrário, transforma em uma subpasta dentro da pasta base do usuário
         return f"{pasta_base}/{pasta_digitada}"
     
     return pasta_digitada
@@ -129,11 +124,15 @@ def fetch_github_contents(path=""):
                     else:
                         folder_name = "Geral"
                     
+                    ext = item['name'].rsplit('.', 1)[1].lower() if '.' in item['name'] else ''
+                    tipo_midia = 'video' if ext in {'mp4', 'mov', 'avi', 'mkv', 'webm', 'm4v', '3gp'} else 'foto'
+
                     items.append({
                         'tipo': 'github',
                         'url': item['download_url'],
                         'nome': item['name'],
-                        'pasta': folder_name
+                        'pasta': folder_name,
+                        'midia': tipo_midia
                     })
     except Exception as e:
         print(f"Erro ao buscar no repositório GitHub ({path}): {e}")
@@ -177,7 +176,6 @@ def index():
         try:
             todas_fotos = fetch_github_contents(TARGET_FOLDER)
             
-            # Filtra estritamente apenas as fotos permitidas para o usuário logado
             if USUARIOS[usuario_atual]['pastas'] == '*':
                 fotos_usuario = todas_fotos
             else:
@@ -190,7 +188,6 @@ def index():
             else:
                 pastas_existentes = [p for p in todas_pastas if usuario_tem_permissao(usuario_atual, p)]
                 
-                # Garante que a pasta base do usuário sempre apareça nas opções
                 pasta_base = obter_base_pasta_usuario(usuario_atual)
                 if pasta_base and pasta_base not in pastas_existentes:
                     pastas_existentes.insert(0, pasta_base)
@@ -203,7 +200,9 @@ def index():
         if os.path.exists(img_dir):
             for f in os.listdir(img_dir):
                 if allowed_file(f):
-                    fotos_usuario.append({'tipo': 'local', 'filename': f, 'nome': f, 'pasta': 'Geral'})
+                    ext = f.rsplit('.', 1)[1].lower() if '.' in f else ''
+                    tipo_midia = 'video' if ext in {'mp4', 'mov', 'avi', 'mkv', 'webm', 'm4v', '3gp'} else 'foto'
+                    fotos_usuario.append({'tipo': 'local', 'filename': f, 'nome': f, 'pasta': 'Geral', 'midia': tipo_midia})
 
     qtd = min(5, len(fotos_usuario))
     fotos_sorteadas = random.sample(fotos_usuario, qtd) if fotos_usuario else []
@@ -255,11 +254,10 @@ def upload_file():
     if not pasta_digitada:
         return jsonify({'error': 'Informe ou selecione uma pasta para o upload.'}), 400
 
-    # Resolve o caminho final considerando a subpasta do usuário
     caminho_pasta_final = resolver_caminho_pasta(usuario_atual, pasta_digitada)
 
     if not usuario_tem_permissao(usuario_atual, caminho_pasta_final):
-        return jsonify({'error': f'Você não tem permissão para enviar fotos na pasta "{caminho_pasta_final}".'}), 403
+        return jsonify({'error': f'Você não tem permissão para enviar arquivos na pasta "{caminho_pasta_final}".'}), 403
 
     if not GITHUB_TOKEN or not GITHUB_REPO:
         return jsonify({'error': 'Configurações do GitHub não encontradas'}), 500
@@ -278,7 +276,7 @@ def upload_file():
         }
 
         payload = {
-            "message": f"Nova foto enviada por {usuario_atual}: {file.filename} em {caminho_pasta_final}",
+            "message": f"Novo arquivo enviado por {usuario_atual}: {file.filename} em {caminho_pasta_final}",
             "content": content_b64,
             "branch": "main"
         }
@@ -286,12 +284,11 @@ def upload_file():
         res = requests.put(url, json=payload, headers=headers)
 
         if res.status_code in [200, 201]:
-            # Adiciona a nova subpasta dinamicamente à lista em memória do usuário se ainda não constar
             if USUARIOS[usuario_atual]['pastas'] != '*':
                 if caminho_pasta_final not in USUARIOS[usuario_atual]['pastas']:
                     USUARIOS[usuario_atual]['pastas'].append(caminho_pasta_final)
 
-            return jsonify({'success': True, 'message': 'Foto enviada com sucesso!'}), 200
+            return jsonify({'success': True, 'message': 'Arquivo enviado com sucesso!'}), 200
         else:
             erro_github = res.json().get('message', 'Erro desconhecido no GitHub')
             return jsonify({'error': f'Erro no GitHub: {erro_github}'}), res.status_code
