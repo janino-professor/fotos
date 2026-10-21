@@ -1,14 +1,42 @@
 let todasAsFotos = [];
 let pastaAtual = 'todas';
 
-function abrirModal(url, legenda) {
+function ehVideo(url, tipoMidia) {
+    if (tipoMidia === 'video') return true;
+    if (!url) return false;
+    const extensoesVideo = ['.mp4', '.mov', '.avi', '.mkv', '.webm', '.m4v', '.3gp'];
+    const urlLower = url.toLowerCase();
+    return extensoesVideo.some(ext => urlLower.endsWith(ext));
+}
+
+function abrirModal(url, legenda, tipoMidia) {
     const modal = document.getElementById('photoModal');
     const modalImg = document.getElementById('modalImg');
+    const modalVideo = document.getElementById('modalVideo');
     const modalCaption = document.getElementById('modalCaption');
     const downloadBtn = document.getElementById('downloadBtn');
 
-    if (modal && modalImg && modalCaption && downloadBtn) {
-        modalImg.src = url;
+    if (modal && modalCaption && downloadBtn) {
+        const eVideo = ehVideo(url, tipoMidia);
+
+        if (eVideo) {
+            if (modalImg) modalImg.style.display = 'none';
+            if (modalVideo) {
+                modalVideo.src = url;
+                modalVideo.style.display = 'block';
+            }
+        } else {
+            if (modalVideo) {
+                modalVideo.pause();
+                modalVideo.style.display = 'none';
+                modalVideo.src = '';
+            }
+            if (modalImg) {
+                modalImg.src = url;
+                modalImg.style.display = 'block';
+            }
+        }
+
         modalCaption.innerText = legenda;
         downloadBtn.href = url;
         modal.style.display = 'flex';
@@ -23,6 +51,11 @@ function fecharModal(event) {
 
 function fecharModalDirect() {
     const modal = document.getElementById('photoModal');
+    const modalVideo = document.getElementById('modalVideo');
+    if (modalVideo) {
+        modalVideo.pause();
+        modalVideo.src = '';
+    }
     if (modal) {
         modal.style.display = 'none';
     }
@@ -52,13 +85,13 @@ function fecharGaleriaDirect() {
 function carregarTodasAsFotos() {
     const galleryGrid = document.getElementById('galleryGrid');
     if (galleryGrid) {
-        galleryGrid.innerHTML = '<p class="loading-txt">Carregando fotos do repositório...</p>';
+        galleryGrid.innerHTML = '<p class="loading-txt">Carregando mídias do repositório...</p>';
     }
 
     fetch('/todas-as-fotos')
         .then(response => {
             if (!response.ok) {
-                throw new Error('Falha ao carregar as fotos');
+                throw new Error('Falha ao carregar as mídias');
             }
             return response.json();
         })
@@ -69,7 +102,7 @@ function carregarTodasAsFotos() {
         .catch(error => {
             console.error('Erro:', error);
             if (galleryGrid) {
-                galleryGrid.innerHTML = '<p class="error-txt">Erro ao carregar fotos. Tente novamente.</p>';
+                galleryGrid.innerHTML = '<p class="error-txt">Erro ao carregar mídias. Tente novamente.</p>';
             }
         });
 }
@@ -115,20 +148,30 @@ function exibirFotosGrid() {
     }
 
     if (fotosFiltradas.length === 0) {
-        galleryGrid.innerHTML = '<p class="empty-txt">Nenhuma foto encontrada nesta pasta.</p>';
+        galleryGrid.innerHTML = '<p class="empty-txt">Nenhuma mídia encontrada nesta pasta.</p>';
         return;
     }
 
     let html = '';
     fotosFiltradas.forEach(foto => {
         const imgUrl = foto.url || `/static/img/${foto.filename}`;
-        const nomeFoto = foto.nome || 'Foto da Família';
+        const nomeFoto = foto.nome || 'Lembrança da Família';
+        const eVideo = ehVideo(imgUrl, foto.midia);
 
-        html += `
-            <div class="gallery-item" onclick="abrirModal('${imgUrl}', '${nomeFoto}')">
-                <img src="${imgUrl}" alt="${nomeFoto}" loading="lazy">
-            </div>
-        `;
+        if (eVideo) {
+            html += `
+                <div class="gallery-item" onclick="abrirModal('${imgUrl}', '${nomeFoto}', 'video')">
+                    <video src="${imgUrl}" style="width:100%; height:100%; object-fit:cover;"></video>
+                    <i class="fa-solid fa-circle-play" style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); font-size: 32px; color: white; text-shadow: 0 2px 6px rgba(0,0,0,0.6);"></i>
+                </div>
+            `;
+        } else {
+            html += `
+                <div class="gallery-item" onclick="abrirModal('${imgUrl}', '${nomeFoto}', 'foto')">
+                    <img src="${imgUrl}" alt="${nomeFoto}" loading="lazy">
+                </div>
+            `;
+        }
     });
 
     galleryGrid.innerHTML = html;
@@ -148,7 +191,7 @@ function enviarFotos() {
     const pastaFinal = novaPasta || pastaSelecionada;
 
     if (files.length === 0) {
-        if (statusDiv) statusDiv.innerHTML = '<span class="erro">Por favor, selecione pelo menos uma foto.</span>';
+        if (statusDiv) statusDiv.innerHTML = '<span class="erro">Por favor, selecione pelo menos um arquivo.</span>';
         return;
     }
 
@@ -157,7 +200,7 @@ function enviarFotos() {
         return;
     }
 
-    if (statusDiv) statusDiv.innerHTML = '<span class="info">Enviando fotos... Aguarde.</span>';
+    if (statusDiv) statusDiv.innerHTML = '<span class="info">Enviando arquivos... Aguarde.</span>';
     if (uploadBtn) uploadBtn.disabled = true;
 
     let enviosConcluidos = 0;
@@ -187,12 +230,12 @@ function enviarFotos() {
             if (enviosConcluidos + erros === files.length) {
                 if (uploadBtn) uploadBtn.disabled = false;
                 if (erros === 0) {
-                    if (statusDiv) statusDiv.innerHTML = '<span class="sucesso">Todas as fotos foram enviadas com sucesso!</span>';
+                    if (statusDiv) statusDiv.innerHTML = '<span class="sucesso">Todos os arquivos foram enviados com sucesso!</span>';
                     setTimeout(() => { window.location.reload(); }, 1500);
                 } else {
-                    if (statusDiv) statusDiv.innerHTML = `<span class="erro">${enviosConcluidos} foto(s) enviada(s), mas ${erros} falhou(aram).</span>`;
+                    if (statusDiv) statusDiv.innerHTML = `<span class="erro">${enviosConcluidos} arquivo(s) enviado(s), mas ${erros} falhou(aram).</span>`;
                 }
             }
         });
     }
-} 
+}
