@@ -47,6 +47,10 @@ USUARIOS = {
     'purrpurple': {
         'senha': '31102026',
         'pastas': ['Atelier']
+    },
+    'amanda': {
+        'senha': '03101998',
+        'pastas': ['Amanda']
     }
 }
 
@@ -162,6 +166,34 @@ def login():
 def logout():
     session.pop('usuario', None)
     return redirect(url_for('login'))
+
+@app.route('/alterar-senha', methods=['POST'])
+def alterar_senha():
+    if 'usuario' not in session:
+        return jsonify({'error': 'Não autorizado'}), 401
+
+    usuario_atual = session['usuario']
+    data = request.get_json() if request.is_json else request.form
+    senha_atual = data.get('senha_atual', '').strip()
+    nova_senha = data.get('nova_senha', '').strip()
+    confirmar_senha = data.get('confirmar_senha', '').strip()
+
+    if not senha_atual or not nova_senha or not confirmar_senha:
+        return jsonify({'error': 'Preencha todos os campos.'}), 400
+
+    if USUARIOS[usuario_atual]['senha'] != senha_atual:
+        return jsonify({'error': 'A senha atual está incorreta.'}), 400
+
+    if nova_senha != confirmar_senha:
+        return jsonify({'error': 'A nova senha e a confirmação não coincidem.'}), 400
+
+    if len(nova_senha) < 4:
+        return jsonify({'error': 'A nova senha deve ter pelo menos 4 caracteres.'}), 400
+
+    # Atualiza a senha no dicionário em memória
+    USUARIOS[usuario_atual]['senha'] = nova_senha
+
+    return jsonify({'success': True, 'message': 'Senha alterada com sucesso!'}), 200
 
 @app.route('/')
 def index():

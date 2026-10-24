@@ -115,6 +115,18 @@ body {
     color: #8b4513;
 }
 
+.password-link {
+    color: #8b4513;
+    text-decoration: none;
+    font-weight: 600;
+    transition: opacity 0.2s;
+    margin-right: 15px;
+}
+
+.password-link:hover {
+    opacity: 0.8;
+}
+
 .logout-link {
     color: #c62828;
     text-decoration: none;
@@ -270,6 +282,7 @@ body {
 
 .status-success { color: #2e7d32; }
 .status-error { color: #c62828; }
+.status-info { color: #d97706; }
 
 /* Modais Geral */
 .modal {

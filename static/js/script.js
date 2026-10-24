@@ -239,3 +239,72 @@ function enviarFotos() {
         });
     }
 }
+
+/* Funções do Modal de Alterar Senha */
+function abrirModalSenha() {
+    const modal = document.getElementById('passwordModal');
+    if (modal) {
+        document.getElementById('passwordForm').reset();
+        document.getElementById('passwordStatus').innerHTML = '';
+        modal.style.display = 'flex';
+    }
+}
+
+function fecharModalSenha(event) {
+    if (event.target.id === 'passwordModal') {
+        fecharModalSenhaDirect();
+    }
+}
+
+function fecharModalSenhaDirect() {
+    const modal = document.getElementById('passwordModal');
+    if (modal) {
+        modal.style.display = 'none';
+    }
+}
+
+function enviarAlteracaoSenha() {
+    const senhaAtual = document.getElementById('senhaAtual').value.trim();
+    const novaSenha = document.getElementById('novaSenha').value.trim();
+    const confirmarSenha = document.getElementById('confirmarSenha').value.trim();
+    const statusDiv = document.getElementById('passwordStatus');
+
+    if (!senhaAtual || !novaSenha || !confirmarSenha) {
+        statusDiv.innerHTML = '<span class="status-error">Preencha todos os campos.</span>';
+        return;
+    }
+
+    if (novaSenha !== confirmarSenha) {
+        statusDiv.innerHTML = '<span class="status-error">As novas senhas não coincidem.</span>';
+        return;
+    }
+
+    statusDiv.innerHTML = '<span class="status-info">Salvando nova senha...</span>';
+
+    fetch('/alterar-senha', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+            senha_atual: senhaAtual,
+            nova_senha: novaSenha,
+            confirmar_senha: confirmarSenha
+        })
+    })
+    .then(response => response.json().then(data => ({ status: response.status, body: data })))
+    .then(res => {
+        if (res.status === 200 && res.body.success) {
+            statusDiv.innerHTML = '<span class="status-success">Senha alterada com sucesso!</span>';
+            setTimeout(() => {
+                fecharModalSenhaDirect();
+            }, 1500);
+        } else {
+            statusDiv.innerHTML = `<span class="status-error">${res.body.error || 'Erro ao alterar senha.'}</span>`;
+        }
+    })
+    .catch(err => {
+        console.error('Erro:', err);
+        statusDiv.innerHTML = '<span class="status-error">Erro de conexão ao alterar senha.</span>';
+    });
+}

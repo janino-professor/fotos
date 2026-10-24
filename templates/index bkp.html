@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Álbum de Fotos da Família</title>
+    <title>Álbum da Família</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Caveat:wght@600&family=Poppins:wght@300;400;600&display=swap" rel="stylesheet">
@@ -12,7 +12,7 @@
 </head>
 <body>
 
-    <!-- Mural de Fotos ao Fundo -->
+    <!-- Mural de Mídias ao Fundo -->
     <div class="mural-background">
         {% set legendas = ['Nossas Memórias', 'Momentos', 'Família', 'Alegria', 'Para Sempre'] %}
         {% for foto in fotos %}
@@ -23,9 +23,16 @@
                 {% set img_url = url_for('static', filename='img/' ~ foto.filename) %}
             {% endif %}
             
-            <div class="polaroid p{{ loop.index }}" onclick="abrirModal('{{ img_url }}', '{{ leg }}')">
+            <div class="polaroid p{{ loop.index }}" onclick="abrirModal('{{ img_url }}', '{{ leg }}', '{{ foto.midia }}')">
                 <div class="tape"></div>
-                <img src="{{ img_url }}" alt="Foto da Família">
+                {% if foto.midia == 'video' %}
+                    <div style="position: relative; width: 100%; height: 180px; background: #000; border-radius: 2px; display: flex; justify-content: center; align-items: center;">
+                        <video src="{{ img_url }}" style="width: 100%; height: 180px; object-fit: cover; opacity: 0.8;"></video>
+                        <i class="fa-solid fa-circle-play" style="position: absolute; font-size: 36px; color: white; text-shadow: 0 2px 8px rgba(0,0,0,0.5);"></i>
+                    </div>
+                {% else %}
+                    <img src="{{ img_url }}" alt="Mídia da Família">
+                {% endif %}
                 <span>{{ leg }}</span>
             </div>
         {% endfor %}
@@ -34,24 +41,29 @@
     <!-- Conteúdo Central -->
     <div class="container">
         <div class="card">
+            <div class="user-bar">
+                <span><i class="fa-solid fa-circle-user"></i> Olá, <strong>{{ usuario }}</strong></span>
+                <a href="{{ url_for('logout') }}" class="logout-link"><i class="fa-solid fa-right-from-bracket"></i> Sair</a>
+            </div>
+
             <div class="header">
                 <i class="fa-solid fa-camera-retro logo-icon"></i>
                 <h1>Mural da Família</h1>
-                <p>Envie suas fotos para guardar nossas lembranças com carinho para sempre!</p>
+                <p>Envie suas fotos e vídeos para guardar nossas lembranças com carinho para sempre!</p>
             </div>
 
             <form id="uploadForm">
                 <!-- Criar Nova Pasta -->
                 <div class="folder-input-group">
                     <i class="fa-solid fa-folder-plus"></i>
-                    <input type="text" id="folderInput" placeholder="Nova Pasta ou Álbum (ex: Viagem, Natal)">
+                    <input type="text" id="folderInput" placeholder="Nova Subpasta (ex: Aniversario, Natal)">
                 </div>
 
-                <!-- Selecionar Pasta Existente -->
+                <!-- Selecionar Pasta Existente Permitida -->
                 <div class="folder-input-group">
                     <i class="fa-solid fa-folder-open"></i>
                     <select id="existingFolderSelect">
-                        <option value="">Ou selecione uma pasta existente...</option>
+                        <option value="">Ou selecione uma pasta/subpasta existente...</option>
                         {% for p in pastas_existentes %}
                             <option value="{{ p }}">{{ p }}</option>
                         {% endfor %}
@@ -60,8 +72,8 @@
 
                 <div class="file-drop-area" id="dropArea">
                     <i class="fa-solid fa-cloud-arrow-up upload-icon"></i>
-                    <span class="file-msg">Clique para escolher as fotos ou arraste até aqui</span>
-                    <input type="file" id="fileInput" accept="image/*" multiple onchange="mostrarNomeArquivo(event)">
+                    <span class="file-msg">Clique para escolher fotos ou vídeos ou arraste até aqui</span>
+                    <input type="file" id="fileInput" accept="image/*,video/*" multiple onchange="mostrarNomeArquivo(event)">
                 </div>
 
                 <div id="fileList" class="file-list"></div>
@@ -83,13 +95,14 @@
     <div id="photoModal" class="modal" onclick="fecharModal(event)">
         <div class="modal-content" onclick="event.stopPropagation()">
             <span class="close-btn" onclick="fecharModalDirect()">&times;</span>
-            <div class="modal-polaroid">
-                <img id="modalImg" src="" alt="Foto Ampliada">
+            <div class="modal-polaroid" id="modalMediaContainer">
+                <img id="modalImg" src="" alt="Mídia Ampliada">
+                <video id="modalVideo" src="" controls style="display: none; max-width: 100%; max-height: 60vh; border-radius: 4px;"></video>
                 <p id="modalCaption"></p>
             </div>
             <div class="modal-actions">
                 <a id="downloadBtn" href="" download target="_blank" class="btn-download">
-                    <i class="fa-solid fa-download"></i> Baixar Foto Original
+                    <i class="fa-solid fa-download"></i> Baixar Arquivo Original
                 </a>
             </div>
         </div>
@@ -104,7 +117,7 @@
             <div id="folderTabs" class="folder-tabs"></div>
 
             <div id="galleryGrid" class="gallery-grid">
-                <p class="loading-txt">Carregando fotos do repositório...</p>
+                <p class="loading-txt">Carregando mídias do repositório...</p>
             </div>
         </div>
     </div>
@@ -117,7 +130,9 @@
             if (input.files.length > 0) {
                 let html = '';
                 for (let i = 0; i < input.files.length; i++) {
-                    html += `<p><i class="fa-regular fa-image"></i> ${input.files[i].name}</p>`;
+                    const isVideo = input.files[i].type.startsWith('video/');
+                    const iconClass = isVideo ? 'fa-video' : 'fa-image';
+                    html += `<p><i class="fa-regular ${iconClass}"></i> ${input.files[i].name}</p>`;
                 }
                 fileList.innerHTML = html;
             } else {
@@ -126,4 +141,4 @@
         }
     </script>
 </body>
-</html>
+</html>     

@@ -43,7 +43,10 @@
         <div class="card">
             <div class="user-bar">
                 <span><i class="fa-solid fa-circle-user"></i> Olá, <strong>{{ usuario }}</strong></span>
-                <a href="{{ url_for('logout') }}" class="logout-link"><i class="fa-solid fa-right-from-bracket"></i> Sair</a>
+                <div>
+                    <a href="#" onclick="abrirModalSenha(); return false;" class="password-link"><i class="fa-solid fa-key"></i> Alterar Senha</a>
+                    <a href="{{ url_for('logout') }}" class="logout-link"><i class="fa-solid fa-right-from-bracket"></i> Sair</a>
+                </div>
             </div>
 
             <div class="header">
@@ -122,6 +125,31 @@
         </div>
     </div>
 
+    <!-- MODAL DE ALTERAR SENHA -->
+    <div id="passwordModal" class="modal" onclick="fecharModalSenha(event)">
+        <div class="modal-content" style="max-width: 400px; text-align: left;" onclick="event.stopPropagation()">
+            <span class="close-btn" onclick="fecharModalSenhaDirect()">&times;</span>
+            <h2 style="font-family: 'Caveat', cursive; font-size: 32px; color: #3a2510; margin-bottom: 20px; text-align: center;"><i class="fa-solid fa-key"></i> Alterar Senha</h2>
+            
+            <form id="passwordForm">
+                <div class="folder-input-group" style="margin-bottom: 15px;">
+                    <i class="fa-solid fa-lock"></i>
+                    <input type="password" id="senhaAtual" placeholder="Senha Atual" required>
+                </div>
+                <div class="folder-input-group" style="margin-bottom: 15px;">
+                    <i class="fa-solid fa-lock"></i>
+                    <input type="password" id="novaSenha" placeholder="Nova Senha" required>
+                </div>
+                <div class="folder-input-group" style="margin-bottom: 20px;">
+                    <i class="fa-solid fa-lock"></i>
+                    <input type="password" id="confirmarSenha" placeholder="Confirmar Nova Senha" required>
+                </div>
+                <button type="button" class="btn-primary" onclick="enviarAlteracaoSenha()">Salvar Nova Senha</button>
+                <div id="passwordStatus" class="status-msg" style="text-align: center; margin-top: 15px;"></div>
+            </form>
+        </div>
+    </div>
+
     <script src="{{ url_for('static', filename='js/script.js') }}"></script>
     <script>
         function mostrarNomeArquivo(event) {
@@ -141,4 +169,4 @@
         }
     </script>
 </body>
-</html>     
+</html>
