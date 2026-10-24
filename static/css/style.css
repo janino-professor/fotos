@@ -287,7 +287,7 @@ body {
     animation: fadeIn 0.3s ease;
 }
 
-/* MODAL DE ZOOM DE FOTO ÚNICA (z-index superior para ficar na frente de tudo) */
+/* MODAL DE ZOOM DE FOTO ÚNICA */
 #photoModal {
     z-index: 4000 !important;
 }
@@ -489,4 +489,36 @@ body {
 @keyframes zoomIn {
     from { transform: scale(0.7); }
     to { transform: scale(1); }
+}
+
+/* Estilo do Botão de Download do APK na Tela de Login */
+.apk-download-container {
+    margin-top: 25px;
+    padding-top: 20px;
+    border-top: 1px dashed #d1c2a5;
+}
+
+.btn-apk {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    width: 100%;
+    background-color: #2e7d32;
+    color: #ffffff;
+    text-decoration: none;
+    padding: 12px;
+    border-radius: 12px;
+    font-size: 14px;
+    font-weight: 600;
+    transition: background-color 0.2s ease, transform 0.1s ease;
+}
+
+.btn-apk:hover {
+    background-color: #1b5e20;
+    transform: translateY(-2px);
+}
+
+.btn-apk i {
+    font-size: 18px;
 }
